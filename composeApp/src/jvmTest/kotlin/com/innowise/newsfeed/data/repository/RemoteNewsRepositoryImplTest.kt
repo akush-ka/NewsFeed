@@ -1,0 +1,175 @@
+package com.innowise.newsfeed.data.repository
+
+import com.innowise.newsfeed.data.network.KtorApiClient
+import com.innowise.newsfeed.data.network.NetworkError
+import com.innowise.newsfeed.data.network.NetworkResult
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.MockRequestHandleScope
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+
+class RemoteNewsRepositoryImplTest {
+    @Test
+    fun getLatestArticlesRequestsLatestArticlesEndpoint() = runBlocking {
+        val repository = createRepository(MockEngine { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            assertEquals("/articles/latest", request.url.encodedPath)
+            assertEquals("1", request.url.parameters["page"])
+            assertEquals("1", request.url.parameters["per_page"])
+
+            respondJson(ARTICLE_LIST_RESPONSE)
+        })
+
+        val result = repository.getLatestArticles(perPage = 1)
+
+        val articles = assertSuccess(result)
+        assertEquals(1, articles.single().id)
+        assertEquals("Latest article", articles.single().title)
+    }
+
+    @Test
+    fun getArticlesRequestsArticlesEndpointWithTag() = runBlocking {
+        val repository = createRepository(MockEngine { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            assertEquals("/articles", request.url.encodedPath)
+            assertEquals("2", request.url.parameters["page"])
+            assertEquals("10", request.url.parameters["per_page"])
+            assertEquals("kotlin", request.url.parameters["tag"])
+
+            respondJson(ARTICLE_LIST_RESPONSE)
+        })
+
+        val result = repository.getArticles(
+            page = 2,
+            perPage = 10,
+            tag = "kotlin",
+        )
+
+        val articles = assertSuccess(result)
+        assertEquals(listOf("kotlin"), articles.single().tagList)
+    }
+
+    @Test
+    fun getArticleRequestsArticleDetailsEndpoint() = runBlocking {
+        val repository = createRepository(MockEngine { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            assertEquals("/articles/42", request.url.encodedPath)
+
+            respondJson(ARTICLE_RESPONSE)
+        })
+
+        val result = repository.getArticle(42)
+
+        val article = assertSuccess(result)
+        assertEquals(42, article.id)
+        assertEquals("Article details", article.title)
+    }
+
+    @Test
+    fun getTagsRequestsTagsEndpoint() = runBlocking {
+        val repository = createRepository(MockEngine { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            assertEquals("/tags", request.url.encodedPath)
+
+            respondJson(TAG_LIST_RESPONSE)
+        })
+
+        val result = repository.getTags()
+
+        val tags = assertSuccess(result)
+        assertEquals(7, tags.single().id)
+        assertEquals("kotlin", tags.single().name)
+    }
+
+    @Test
+    fun httpErrorReturnsNetworkError() = runBlocking {
+        val repository = createRepository(MockEngine {
+            respond(
+                content = "",
+                status = HttpStatusCode.InternalServerError,
+            )
+        })
+
+        val result = repository.getLatestArticles(perPage = 1)
+
+        val error = assertIs<NetworkResult.Error>(result).error
+        assertEquals(NetworkError.Http(HttpStatusCode.InternalServerError), error)
+    }
+
+    private fun createRepository(mockEngine: MockEngine): RemoteNewsRepositoryImpl {
+        val httpClient = HttpClient(mockEngine) {
+            expectSuccess = true
+
+            install(ContentNegotiation) {
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                    },
+                )
+            }
+        }
+
+        return RemoteNewsRepositoryImpl(
+            apiClient = KtorApiClient(httpClient),
+        )
+    }
+
+    private fun MockRequestHandleScope.respondJson(content: String) =
+        respond(
+            content = content,
+            status = HttpStatusCode.OK,
+            headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+        )
+
+    private fun <T> assertSuccess(result: NetworkResult<T>): T =
+        when (result) {
+            is NetworkResult.Success -> result.data
+            is NetworkResult.Error -> error("Expected success, got ${result.error}")
+        }
+
+    private companion object {
+        const val ARTICLE_LIST_RESPONSE = """
+            [
+                {
+                    "id": 1,
+                    "title": "Latest article",
+                    "description": "Short description",
+                    "url": "https://dev.to/news/latest-article",
+                    "tag_list": ["kotlin"],
+                    "unknown_field": "ignored"
+                }
+            ]
+        """
+
+        const val ARTICLE_RESPONSE = """
+            {
+                "id": 42,
+                "title": "Article details",
+                "description": "Details description",
+                "url": "https://dev.to/news/article-details",
+                "tag_list": ["android"]
+            }
+        """
+
+        const val TAG_LIST_RESPONSE = """
+            [
+                {
+                    "id": 7,
+                    "name": "kotlin"
+                }
+            ]
+        """
+    }
+}

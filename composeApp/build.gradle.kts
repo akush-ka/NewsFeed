@@ -50,6 +50,7 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.mock)
         }
     }
 }

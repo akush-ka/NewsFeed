@@ -5,6 +5,7 @@ import com.innowise.newsfeed.data.network.dto.TagDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
@@ -19,7 +20,7 @@ class KtorApiClient(
         page: Int,
         perPage: Int,
     ): List<ArticleDto> =
-        httpClient.get("$BASE_URL/articles/latest") {
+        httpClient.get("articles/latest") {
             parameter("page", page)
             parameter("per_page", perPage)
         }.body()
@@ -29,17 +30,17 @@ class KtorApiClient(
         perPage: Int,
         tag: String? = null,
     ): List<ArticleDto> =
-        httpClient.get("$BASE_URL/articles") {
+        httpClient.get("articles") {
             parameter("page", page)
             parameter("per_page", perPage)
             tag?.let { parameter("tag", it) }
         }.body()
 
     suspend fun getArticle(articleId: Long): ArticleDto =
-        httpClient.get("$BASE_URL/articles/$articleId").body()
+        httpClient.get("articles/$articleId").body()
 
     suspend fun getTags(): List<TagDto> =
-        httpClient.get("$BASE_URL/tags").body()
+        httpClient.get("tags").body()
 
     private companion object {
         const val BASE_URL = "https://dev.to/api"
@@ -47,6 +48,10 @@ class KtorApiClient(
         fun createDefaultHttpClient(): HttpClient =
             HttpClient {
                 expectSuccess = true
+
+                defaultRequest {
+                    url(BASE_URL)
+                }
 
                 install(ContentNegotiation) {
                     json(
