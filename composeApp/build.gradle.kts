@@ -48,6 +48,9 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.ktor.client.cio)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+        }
     }
 }
 
