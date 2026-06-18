@@ -16,7 +16,4 @@ interface ArticleDao {
 
     @Query("SELECT * FROM articles WHERE id = :id")
     suspend fun getArticleById(id: Long): ArticleEntity?
-
-    @Query("DELETE FROM articles")
-    suspend fun clear()
 }
