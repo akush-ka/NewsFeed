@@ -58,7 +58,7 @@ class RemoteNewsRepositoryImplTest {
         )
 
         val articles = assertSuccess(result)
-        assertEquals(listOf("kotlin"), articles.single().tagList)
+        assertEquals("kotlin", articles.single().tags)
     }
 
     @Test
