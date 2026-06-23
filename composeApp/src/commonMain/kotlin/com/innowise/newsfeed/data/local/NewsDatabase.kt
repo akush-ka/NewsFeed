@@ -7,6 +7,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.innowise.newsfeed.data.local.dao.ArticleDao
 import com.innowise.newsfeed.data.local.entity.ArticleEntity
+import kotlinx.coroutines.Dispatchers
 
 @Database(entities = [ArticleEntity::class], version = 1, exportSchema = false)
 @ConstructedBy(NewsDatabaseConstructor::class)
@@ -23,4 +24,5 @@ expect object NewsDatabaseConstructor : RoomDatabaseConstructor<NewsDatabase>
 fun getNewsDatabase(builder: RoomDatabase.Builder<NewsDatabase>): NewsDatabase =
     builder
         .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
         .build()

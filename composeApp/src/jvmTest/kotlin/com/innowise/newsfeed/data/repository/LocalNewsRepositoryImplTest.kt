@@ -3,7 +3,7 @@ package com.innowise.newsfeed.data.repository
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.innowise.newsfeed.data.local.NewsDatabase
-import com.innowise.newsfeed.data.local.entity.ArticleEntity
+import com.innowise.newsfeed.domain.model.Article
 import com.innowise.newsfeed.domain.repository.LocalNewsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -54,14 +54,14 @@ class LocalNewsRepositoryImplTest {
         assertNull(repository.getArticle(1))
     }
 
-    private fun article(id: Long) = ArticleEntity(
+    private fun article(id: Long) = Article(
         id = id,
         title = "Title $id",
         description = "Description $id",
         url = "https://dev.to/$id",
-        coverImageUrl = null,
-        publishedTimestamp = null,
-        readingTimeMinutes = null,
+        coverImageUrl = "",
+        publishedTimestamp = "",
+        readingTimeMinutes = 0,
         authorName = "Author $id",
         tags = "kotlin",
     )
