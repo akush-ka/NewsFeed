@@ -2,19 +2,18 @@ package com.innowise.newsfeed.data.repository
 
 import com.innowise.newsfeed.data.mapper.toDomain
 import com.innowise.newsfeed.data.network.KtorApiClient
-import com.innowise.newsfeed.data.network.NetworkResult
 import com.innowise.newsfeed.data.network.safeApiCall
 import com.innowise.newsfeed.domain.model.Article
 import com.innowise.newsfeed.domain.model.Tag
 import com.innowise.newsfeed.domain.repository.RemoteNewsRepository
 
-class RemoteNewsRepositoryImpl(
-    private val apiClient: KtorApiClient = KtorApiClient(),
+internal class RemoteNewsRepositoryImpl(
+    private val apiClient: KtorApiClient,
 ) : RemoteNewsRepository {
     override suspend fun getLatestArticles(
         page: Int,
         perPage: Int,
-    ): NetworkResult<List<Article>> =
+    ): Result<List<Article>> =
         safeApiCall {
             apiClient.getLatestArticles(
                 page = page,
@@ -26,7 +25,7 @@ class RemoteNewsRepositoryImpl(
         page: Int,
         perPage: Int,
         tag: String?,
-    ): NetworkResult<List<Article>> =
+    ): Result<List<Article>> =
         safeApiCall {
             apiClient.getArticles(
                 page = page,
@@ -35,12 +34,12 @@ class RemoteNewsRepositoryImpl(
             ).map { it.toDomain() }
         }
 
-    override suspend fun getArticle(articleId: Long): NetworkResult<Article> =
+    override suspend fun getArticle(articleId: Long): Result<Article> =
         safeApiCall {
             apiClient.getArticle(articleId).toDomain()
         }
 
-    override suspend fun getTags(): NetworkResult<List<Tag>> =
+    override suspend fun getTags(): Result<List<Tag>> =
         safeApiCall {
             apiClient.getTags().map { it.toDomain() }
         }

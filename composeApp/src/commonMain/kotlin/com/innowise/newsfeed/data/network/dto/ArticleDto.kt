@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ArticleDto(
+internal class ArticleDto(
     val id: Long,
     val title: String,
     val description: String? = null,
@@ -24,11 +24,11 @@ data class ArticleDto(
 )
 
 @Serializable
-data class UserDto(
+internal class UserDto(
     val name: String? = null
 )
 
 @Serializable
-data class OrganizationDto(
+internal class OrganizationDto(
     val name: String? = null
 )

@@ -5,7 +5,7 @@ import com.innowise.newsfeed.data.network.dto.TagDto
 import com.innowise.newsfeed.domain.model.Article
 import com.innowise.newsfeed.domain.model.Tag
 
-fun ArticleDto.toDomain(): Article = Article(
+internal fun ArticleDto.toDomain(): Article = Article(
     id = id,
     title = title,
     description = description.orEmpty(),
@@ -17,7 +17,7 @@ fun ArticleDto.toDomain(): Article = Article(
     tags = tagList.joinToString(separator = ","),
 )
 
-fun TagDto.toDomain(): Tag = Tag(
+internal fun TagDto.toDomain(): Tag = Tag(
     id = id,
     name = name,
 )

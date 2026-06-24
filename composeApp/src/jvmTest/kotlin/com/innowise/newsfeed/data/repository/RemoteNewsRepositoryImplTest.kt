@@ -1,24 +1,20 @@
 package com.innowise.newsfeed.data.repository
 
-import com.innowise.newsfeed.data.network.KtorApiClient
-import com.innowise.newsfeed.data.network.NetworkError
-import com.innowise.newsfeed.data.network.NetworkResult
-import io.ktor.client.HttpClient
+import com.innowise.newsfeed.testutil.createTestApiClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.ResponseException
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class RemoteNewsRepositoryImplTest {
     @Test
@@ -94,7 +90,7 @@ class RemoteNewsRepositoryImplTest {
     }
 
     @Test
-    fun httpErrorReturnsNetworkError() = runBlocking {
+    fun httpErrorReturnsFailure() = runBlocking {
         val repository = createRepository(MockEngine {
             respond(
                 content = "",
@@ -104,27 +100,15 @@ class RemoteNewsRepositoryImplTest {
 
         val result = repository.getLatestArticles(perPage = 1)
 
-        val error = assertIs<NetworkResult.Error>(result).error
-        assertEquals(NetworkError.Http(HttpStatusCode.InternalServerError), error)
+        assertTrue(result.isFailure)
+        val exception = assertIs<ResponseException>(result.exceptionOrNull())
+        assertEquals(HttpStatusCode.InternalServerError, exception.response.status)
     }
 
-    private fun createRepository(mockEngine: MockEngine): RemoteNewsRepositoryImpl {
-        val httpClient = HttpClient(mockEngine) {
-            expectSuccess = true
-
-            install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
-                    },
-                )
-            }
-        }
-
-        return RemoteNewsRepositoryImpl(
-            apiClient = KtorApiClient(httpClient),
+    private fun createRepository(mockEngine: MockEngine): RemoteNewsRepositoryImpl =
+        RemoteNewsRepositoryImpl(
+            apiClient = createTestApiClient(mockEngine),
         )
-    }
 
     private fun MockRequestHandleScope.respondJson(content: String) =
         respond(
@@ -133,11 +117,8 @@ class RemoteNewsRepositoryImplTest {
             headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
         )
 
-    private fun <T> assertSuccess(result: NetworkResult<T>): T =
-        when (result) {
-            is NetworkResult.Success -> result.data
-            is NetworkResult.Error -> error("Expected success, got ${result.error}")
-        }
+    private fun <T> assertSuccess(result: Result<T>): T =
+        result.getOrElse { error("Expected success, got $it") }
 
     private companion object {
         const val ARTICLE_LIST_RESPONSE = """
