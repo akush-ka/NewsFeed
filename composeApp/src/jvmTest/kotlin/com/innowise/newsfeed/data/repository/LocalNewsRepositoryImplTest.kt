@@ -35,11 +35,23 @@ class LocalNewsRepositoryImplTest {
 
     @Test
     fun saveArticlesThenGetArticlesEmitsSaved() = runBlocking {
-        val articles = listOf(article(1), article(2))
+        val older = article(1, publishedTimestamp = "2026-01-01T10:00:00Z")
+        val newer = article(2, publishedTimestamp = "2026-02-01T10:00:00Z")
 
-        repository.saveArticles(articles)
+        repository.saveArticles(listOf(older, newer))
 
-        assertEquals(articles, repository.getArticles().first())
+        assertEquals(listOf(older, newer), repository.getArticles().first().sortedBy { it.id })
+    }
+
+    @Test
+    fun getArticlesOrdersByPublishedTimestampDesc() = runBlocking {
+        val older = article(1, publishedTimestamp = "2026-01-01T10:00:00Z")
+        val newest = article(2, publishedTimestamp = "2026-03-01T10:00:00Z")
+        val middle = article(3, publishedTimestamp = "2026-02-01T10:00:00Z")
+
+        repository.saveArticles(listOf(older, newest, middle))
+
+        assertEquals(listOf(newest, middle, older), repository.getArticles().first())
     }
 
     @Test
@@ -54,13 +66,16 @@ class LocalNewsRepositoryImplTest {
         assertNull(repository.getArticle(1))
     }
 
-    private fun article(id: Long) = Article(
+    private fun article(
+        id: Long,
+        publishedTimestamp: String = "",
+    ) = Article(
         id = id,
         title = "Title $id",
         description = "Description $id",
         url = "https://dev.to/$id",
         coverImageUrl = "",
-        publishedTimestamp = "",
+        publishedTimestamp = publishedTimestamp,
         readingTimeMinutes = 0,
         authorName = "Author $id",
         tags = "kotlin",
