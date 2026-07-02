@@ -9,5 +9,5 @@ data class Article(
     val publishedTimestamp: String,
     val readingTimeMinutes: Int,
     val authorName: String,
-    val tags: String,
+    val tags: List<String>,
 )

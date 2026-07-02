@@ -14,7 +14,7 @@ internal fun ArticleDto.toDomain(): Article = Article(
     publishedTimestamp = publishedTimestamp.orEmpty(),
     readingTimeMinutes = readingTimeMinutes ?: 0,
     authorName = (user?.name ?: organization?.name).orEmpty(),
-    tags = tagList.joinToString(separator = ","),
+    tags = tagList,
 )
 
 internal fun TagDto.toDomain(): Tag = Tag(

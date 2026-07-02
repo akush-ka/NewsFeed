@@ -21,7 +21,8 @@ class RemoteNewsRepositoryImplTest {
     fun getLatestArticlesRequestsLatestArticlesEndpoint() = runBlocking {
         val repository = createRepository(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
-            assertEquals("/articles/latest", request.url.encodedPath)
+            assertEquals("dev.to", request.url.host)
+            assertEquals("/api/articles/latest", request.url.encodedPath)
             assertEquals("1", request.url.parameters["page"])
             assertEquals("1", request.url.parameters["per_page"])
 
@@ -39,7 +40,7 @@ class RemoteNewsRepositoryImplTest {
     fun getArticlesRequestsArticlesEndpointWithTag() = runBlocking {
         val repository = createRepository(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
-            assertEquals("/articles", request.url.encodedPath)
+            assertEquals("/api/articles", request.url.encodedPath)
             assertEquals("2", request.url.parameters["page"])
             assertEquals("10", request.url.parameters["per_page"])
             assertEquals("kotlin", request.url.parameters["tag"])
@@ -54,14 +55,14 @@ class RemoteNewsRepositoryImplTest {
         )
 
         val articles = assertSuccess(result)
-        assertEquals("kotlin", articles.single().tags)
+        assertEquals(listOf("kotlin"), articles.single().tags)
     }
 
     @Test
     fun getArticleRequestsArticleDetailsEndpoint() = runBlocking {
         val repository = createRepository(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
-            assertEquals("/articles/42", request.url.encodedPath)
+            assertEquals("/api/articles/42", request.url.encodedPath)
 
             respondJson(ARTICLE_RESPONSE)
         })
@@ -77,7 +78,7 @@ class RemoteNewsRepositoryImplTest {
     fun getTagsRequestsTagsEndpoint() = runBlocking {
         val repository = createRepository(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
-            assertEquals("/tags", request.url.encodedPath)
+            assertEquals("/api/tags", request.url.encodedPath)
 
             respondJson(TAG_LIST_RESPONSE)
         })
