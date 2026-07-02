@@ -7,9 +7,14 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -32,6 +37,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -39,6 +46,9 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
         }
     }
 }
@@ -72,6 +82,8 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
 }
 
 compose.desktop {
